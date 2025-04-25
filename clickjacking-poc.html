@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Clickjacking PoC - sudosuraj</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+    }
+    nav {
+      background: #111;
+      padding: 15px 20px;
+      color: #fff;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    nav .links a {
+      margin-left: 20px;
+      color: #fff;
+      text-decoration: none;
+      position: relative;
+      transition: color 0.3s;
+    }
+    nav .links a:hover {
+      color: #f55;
+    }
+    .tooltip {
+      visibility: hidden;
+      background-color: #333;
+      color: #fff;
+      text-align: center;
+      border-radius: 5px;
+      padding: 10px;
+      position: absolute;
+      z-index: 1;
+      top: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 250px;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    nav .links a:hover .tooltip {
+      visibility: visible;
+      opacity: 1;
+    }
+    header {
+      padding: 5px;
+      background-color: #222;
+      color: white;
+      text-align: center;
+    }
+    #target {
+      width: 100%;
+      height: 70vh;
+      border: 3px solid #ff0000;
+      margin-top: 10px;
+      display: block;
+    }
+    .status {
+      text-align: center;
+      font-weight: bold;
+      padding: 5px;
+    }
+    .content {
+      padding: 20px;
+    }
+    .mitigation {
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    footer {
+      text-align: center;
+      padding: 10px;
+      background: #333;
+      color: white;
+    }
+    footer a {
+      color: #f55;
+      text-decoration: none;
+    }
+    footer a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <div><strong>Clickjacking PoC</strong></div>
+    <div class="links">
+      <a href="https://sudosuraj.github.io">Blogs</a>
+      <a href="#">About
+        <span class="tooltip">~#: whoami - A cybersecurity enthusiast and professional with a passion for ethical hacking, penetration testing, and web security.</span>
+      </a>
+      <a href="#mitigation">Mitigation</a>
+    </div>
+  </nav>
+
+  <header>
+    <h1 id="domain-heading">Clickjacking PoC</h1>
+    <h3 id="iframe-message" class="status" style="display:none;"></h3>
+  </header>
+
+  <iframe id="target"></iframe>
+
+  <div class="content" id="mitigation">
+    <h2>Clickjacking Mitigation & Remediation</h2>
+
+    <div class="mitigation">
+      <h3>Prevention Measures:</h3>
+      <ol>
+        <li><strong>X-Frame-Options Header:</strong><br>
+          Set HTTP header: <code>X-Frame-Options: DENY</code> or <code>SAMEORIGIN</code><br>
+          <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options" target="_blank">MDN Reference</a>
+        </li>
+        <li><strong>Content Security Policy (CSP):</strong><br>
+          Use: <code>Content-Security-Policy: frame-ancestors 'none'</code><br>
+          <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Security-Policy/frame-ancestors" target="_blank">MDN Reference</a>
+        </li>
+        <li><strong>Frame-Busting Script:</strong><br>
+          Add to your page's HTML:<br>
+          <code>&lt;script&gt;if(top !== self) top.location.href = self.location.href;&lt;/script&gt;</code>
+        </li>
+      </ol>
+    </div>
+
+    <div class="mitigation">
+      <h3>Remediation Steps:</h3>
+      <ol>
+        <li>Implement server-side headers (X-Frame-Options or CSP)</li>
+        <li>Test using this PoC tool after implementation</li>
+        <li>Use combination of client-side and server-side protections</li>
+        <li>Regularly audit sensitive pages</li>
+      </ol>
+    </div>
+  </div>
+
+  <footer>
+    © 1337 <a href="https://www.linkedin.com/in/sudosuraj/" target="_blank">sudosuraj</a> - Hosted at 
+    <a href="https://sudosura.github.io/clickjacking-poc.html" target="_blank">sudosura.github.io/clickjacking-poc</a> |
+  </footer>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const url = prompt("Enter URL to test for clickjacking vulnerability:");
+      const iframe = document.getElementById("target");
+      const heading = document.getElementById("domain-heading");
+      const message = document.getElementById("iframe-message");
+
+      function getDomainName(u) {
+        try {
+          return new URL(u).hostname;
+        } catch (e) {
+          return "Invalid URL";
+        }
+      }
+
+      function updateStatus(vulnerable, reason = '') {
+        message.style.display = "block";
+        iframe.style.borderColor = vulnerable ? '#cc0000' : '#00cc00';
+        message.textContent = vulnerable 
+          ? "If the website is loaded below, then this website is vulnerable to clickjacking!" 
+          : `Protected against clickjacking: ${reason}`;
+        message.style.color = vulnerable ? '#cc0000' : '#00cc00';
+      }
+
+      if (url) {
+        heading.textContent = `Clickjacking PoC for: ${getDomainName(url)}`;
+        let isLoaded = false;
+        let isBlocked = false;
+
+        const timeout = setTimeout(() => {
+          if (!isLoaded && !isBlocked) {
+            updateStatus(false, 'Timeout reached - resource not loaded');
+          }
+        }, 6000);
+
+        iframe.addEventListener('load', () => {
+          isLoaded = true;
+          clearTimeout(timeout);
+          try {
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
+            const bustingScripts = doc.querySelectorAll('script');
+            const hasFrameBuster = Array.from(bustingScripts).some(script => 
+              script.textContent.includes('top.location') || 
+              script.textContent.includes('self !== top')
+            );
+            
+            const finalUrl = iframe.contentWindow.location.href;
+            if (finalUrl !== url) {
+              updateStatus(false, `Redirected to different origin: ${getDomainName(finalUrl)}`);
+            } else {
+              updateStatus(!hasFrameBuster);
+            }
+          } catch (e) {
+            const iframeRect = iframe.getBoundingClientRect();
+            updateStatus(iframeRect.height > 0 && iframeRect.width > 0);
+          }
+        });
+
+        iframe.addEventListener('error', () => {
+          isBlocked = true;
+          clearTimeout(timeout);
+          updateStatus(false, 'Browser blocked iframe loading');
+        });
+
+        iframe.src = url;
+      } else {
+        heading.textContent = "Clickjacking PoC for: example.com";
+        iframe.src = "https://ecorpsecurity.com";
+        updateStatus(true);
+      }
+    });
+  </script>
+</body>
+</html>
