@@ -3,8 +3,8 @@
 This repository contains a simple Clickjacking Proof of Concept (PoC) tool designed to demonstrate how websites can be vulnerable to Clickjacking attacks.
 
 ## How to Use
-### 1. Visit https://sudosura.github.io/clickjacking-poc.html, and you open the page, you’ll be prompted to enter the URL of the website you want to test for clickjacking vulnerabilities.
-### 2. Enter the domain or URL and boom!
+1. Visit https://sudosuraj.github.io/clickjacking-poc/, and you open the page, you’ll be prompted to enter the URL of the website you want to test for clickjacking vulnerabilities.
+2. Enter the domain or URL and boom!
 
 ## What is Clickjacking?
 
